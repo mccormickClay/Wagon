@@ -4,22 +4,91 @@ using UnityEngine;
 
 public class PlayerCombat : MonoBehaviour
 {
+    // the current action the player is trying to do.
     CombatStates state;
-    float health;
+    // The max amount of health the player can have
+    float maxHealth;
+    // the current health that will be updated continually
+    float currHealth;
+    // the amount health will regen overtime
+    float regenAmountHealth;
+
+    // The largest amount of stamina the player can have
+    float maxStamina;
+    // current amount of stamina. This all continually be updated
+    float currStamina;
+    // The amount stamina will regen overtime
+    float regenAmountStamina;
+    // the minimum amount of stamina needed to be able to attack, block, parry
+    float staminaActionMinimal;
+    // the amount over time block has on currStamina
+    float blockStaminaDecrease;
+    // the amount over time parry has on currStamina
+    float parryStaminaDecrease;
+    // the amount attack takes away from currStamina. This is NOT OVER TIME
+    float attackStamina;
+
+    // the amount the player can do to an enemy
     float damage;
+    // percentage damage that is blocked when in BLOCK CombatState
+    // use 0.0f - 1.0f
+    float blockResist;
+
+    // The UI stats of Health and Stamina in the Canvas
+    public StatsUI stats;
 
     // Start is called before the first frame update
     void Start()
     {
         state = CombatStates.NONE;
-        health = 100.0f;
+        maxHealth = 100.0f;
+        currHealth = 100.0f;
+        regenAmountHealth = 0.1f;
+
+        maxStamina = 100.0f;
+        currStamina = 100.0f;
+        regenAmountStamina = 0.1f;
+        staminaActionMinimal = 20.0f;
+        blockStaminaDecrease = 0.2f;
+        parryStaminaDecrease = 0.4f;
+        attackStamina = 20.0f;
+
         damage = 20.0f;
+
+        blockResist = 0.5f;
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        
+        /*if (currHealth < maxHealth)
+        {
+            currHealth += regenAmountHealth;
+            stats.UpdateHealthUI(currHealth);
+        }*/
+
+        switch(state)
+        {
+            case CombatStates.BLOCK:
+                currStamina -= blockStaminaDecrease;
+                break;
+            case CombatStates.PARRY:
+                currStamina -= parryStaminaDecrease;
+                break;
+            default:
+                if (currStamina < maxStamina)
+                {
+                    currStamina += regenAmountStamina;                 
+                }
+                break;
+        }
+
+        stats.UpdateStaminaUI(currStamina);
+
+        if(currStamina < staminaActionMinimal && state != CombatStates.NONE)
+        {
+            SetState(CombatStates.NONE);
+        }
     }
 
     public CombatStates GetState()
@@ -29,17 +98,24 @@ public class PlayerCombat : MonoBehaviour
 
     public void button_State(string _state)
     {
+        if(currStamina >= staminaActionMinimal)
         switch(_state)
         {
             case "ATTACK":
                 SetState(CombatStates.ATTACK);
                 return;
             case "BLOCK":
-                SetState(CombatStates.BLOCK);
+                    if (state != CombatStates.BLOCK)
+                        SetState(CombatStates.BLOCK);
+                    else
+                        state = CombatStates.NONE;
                 return;
-            case "PARRY":
-                SetState(CombatStates.PARRY);
-                return;
+            case "PARRY": // need ot make parry be a timer for so long and then cancels itself
+                    if (state != CombatStates.PARRY)
+                        SetState(CombatStates.PARRY);
+                    else
+                        state = CombatStates.NONE;
+                    return;
         }
     }
 
@@ -52,24 +128,55 @@ public class PlayerCombat : MonoBehaviour
     public void Attack()
     {
         EnemyCombat temp = GameObject.Find("Cube").GetComponent<EnemyCombat>();
-        if (temp.GetState() == CombatStates.ATTACK)
+
+        if (currStamina > staminaActionMinimal)
         {
-            temp.Damage(damage);
-        }
-        else
-        {
-            Damage(10.0f);
+            currStamina -= attackStamina;
+            stats.UpdateStaminaUI(currStamina);
+
+            if (temp.GetState() == CombatStates.ATTACK)
+            {
+                temp.Damage(damage);
+            }
+            else
+            {
+                Damage(10.0f);
+            }
         }
         SetState(CombatStates.NONE);
     }
 
+    void NonblockableAttack(float _damage)
+    {
+        EnemyCombat temp = GameObject.Find("Cube").GetComponent<EnemyCombat>();
+        temp.Damage(damage);
+    }
+
     public void Damage(float _damage)
     {
-        health -= _damage;
-        DebugMobileManager.Log("Player health is: " + health);
-        if(health <= 0)
+        switch (state)
+        {
+            case CombatStates.BLOCK:
+                // 50% damage
+                currHealth -= _damage * blockResist; // should be resistance val
+                break;
+            case CombatStates.PARRY:
+                // 0% damage
+                // 100% damage back to enemy
+                NonblockableAttack(_damage);
+                break;
+            default:
+                // 100% damage
+                currHealth -= _damage;
+                break;
+        }
+       
+        stats.UpdateHealthUI(currHealth);
+        DebugMobileManager.Log("Player health is: " + currHealth);
+        if(currHealth <= 0)
         {
             DebugMobileManager.Log("GAME OVER");
         }
     }
+
 }

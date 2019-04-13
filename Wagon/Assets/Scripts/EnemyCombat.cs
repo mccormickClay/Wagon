@@ -6,6 +6,7 @@ public class EnemyCombat : MonoBehaviour
 {
     CombatStates state;
     float health;
+    float damage;
     GameObject player;
     Animator anim;
 
@@ -14,6 +15,7 @@ public class EnemyCombat : MonoBehaviour
     {
         state = CombatStates.NONE;
         health = 100.0f;
+        damage = 20.0f;
         player = GameObject.Find("Player");
         anim = GetComponent<Animator>();
     }
@@ -62,24 +64,7 @@ public class EnemyCombat : MonoBehaviour
 
     void Attack()
     {
-        // Check Player Choice currently...
-        CombatStates tempState = GameObject.Find("Player").GetComponent<PlayerCombat>().GetState();
-        switch(tempState)
-        {
-            case CombatStates.BLOCK:
-                // 20% damage
-                player.GetComponent<PlayerCombat>().Damage(20.0f);
-                return;
-            case CombatStates.PARRY:
-                // 0% damage
-                // 100 damage to self
-                Damage(50.0f);
-                return;
-            default:
-                // 100% damage
-                player.GetComponent<PlayerCombat>().Damage(50.0f);
-                return;
-        }
+        player.GetComponent<PlayerCombat>().Damage(damage);
     }
 
     public void Damage(float _damage)
