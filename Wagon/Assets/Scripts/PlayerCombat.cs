@@ -154,10 +154,7 @@ public class PlayerCombat : MonoBehaviour
             {
                 temp.Damage(damage);
             }
-            else
-            {
-                Damage(10.0f);
-            }
+
         }
         SetState(CombatStates.NONE);
     }

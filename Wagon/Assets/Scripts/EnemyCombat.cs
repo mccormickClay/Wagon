@@ -92,4 +92,13 @@ public class EnemyCombat : MonoBehaviour
     {
         anim.Play("CubeIdle");
     }
+
+    private void ChangeStance()
+    {
+        /*int stance = Mathf.RoundToInt(Random.Range(0, 2));
+        anim.SetInteger("attackStance", stance);*/
+
+        int stance = Random.Range(0, 3);
+        anim.SetTrigger("attack_" + stance);
+    }
 }
