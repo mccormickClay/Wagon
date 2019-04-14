@@ -34,6 +34,9 @@ public class PlayerCombat : MonoBehaviour
     // use 0.0f - 1.0f
     float blockResist;
 
+    float parryTimer;
+
+    float parryTimerHold;
     // The UI stats of Health and Stamina in the Canvas
     public StatsUI stats;
 
@@ -56,6 +59,9 @@ public class PlayerCombat : MonoBehaviour
         damage = 20.0f;
 
         blockResist = 0.5f;
+
+        parryTimer = 0.0f;
+        parryTimerHold = 1.0f;
     }
 
     // Update is called once per frame
@@ -67,6 +73,12 @@ public class PlayerCombat : MonoBehaviour
             stats.UpdateHealthUI(currHealth);
         }*/
 
+        if(parryTimer < 0.0f)
+        {
+            state = CombatStates.NONE;
+            parryTimer = 0.0f;
+        }
+
         switch(state)
         {
             case CombatStates.BLOCK:
@@ -74,6 +86,7 @@ public class PlayerCombat : MonoBehaviour
                 break;
             case CombatStates.PARRY:
                 currStamina -= parryStaminaDecrease;
+                parryTimer -= Time.deltaTime;
                 break;
             default:
                 if (currStamina < maxStamina)
@@ -112,7 +125,10 @@ public class PlayerCombat : MonoBehaviour
                 return;
             case "PARRY": // need ot make parry be a timer for so long and then cancels itself
                     if (state != CombatStates.PARRY)
+                    {
                         SetState(CombatStates.PARRY);
+                        parryTimer = parryTimerHold;
+                    }
                     else
                         state = CombatStates.NONE;
                     return;
@@ -149,7 +165,7 @@ public class PlayerCombat : MonoBehaviour
     void NonblockableAttack(float _damage)
     {
         EnemyCombat temp = GameObject.Find("Cube").GetComponent<EnemyCombat>();
-        temp.Damage(damage);
+        temp.ParryDamage(damage);
     }
 
     public void Damage(float _damage)
@@ -164,6 +180,8 @@ public class PlayerCombat : MonoBehaviour
                 // 0% damage
                 // 100% damage back to enemy
                 NonblockableAttack(_damage);
+                state = CombatStates.NONE;
+                parryTimer = 0.0f;
                 break;
             default:
                 // 100% damage
@@ -175,6 +193,7 @@ public class PlayerCombat : MonoBehaviour
         DebugMobileManager.Log("Player health is: " + currHealth);
         if(currHealth <= 0)
         {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(0);
             DebugMobileManager.Log("GAME OVER");
         }
     }

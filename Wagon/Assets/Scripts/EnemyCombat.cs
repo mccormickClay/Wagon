@@ -10,6 +10,8 @@ public class EnemyCombat : MonoBehaviour
     GameObject player;
     Animator anim;
 
+    public StatsUI stats;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -34,7 +36,7 @@ public class EnemyCombat : MonoBehaviour
     public void SetState(CombatStates _state)
     {
         state = _state;
-        DebugMobileManager.Log("Enemy state is: " + state.ToString());
+        //DebugMobileManager.Log("Enemy state is: " + state.ToString());
     }
 
     void SetAffectableAttack()
@@ -70,16 +72,23 @@ public class EnemyCombat : MonoBehaviour
     public void Damage(float _damage)
     {
         health -= _damage;
-        ChangeToIdle();
+        stats.UpdateEnemyHpUI(health);
         DebugMobileManager.Log("Enemy health is: " + health);
         if (health <= 0)
         {
             DebugMobileManager.Log("ENEMY DEFEATED");
             Destroy(this.gameObject);
+            UnityEngine.SceneManagement.SceneManager.LoadScene(0);
         }
     }
 
-    public void ChangeToIdle()
+    public void ParryDamage(float _damage)
+    {
+        ChangeToIdle();
+        Damage(_damage);
+    }
+
+    private void ChangeToIdle()
     {
         anim.Play("CubeIdle");
     }

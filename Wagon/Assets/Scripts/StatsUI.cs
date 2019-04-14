@@ -7,6 +7,7 @@ public class StatsUI : MonoBehaviour
 {
     public Slider Hp;
     public Slider Stamina;
+    public Slider EnemyHp;
 
     // Start is called before the first frame update
     void Start()
@@ -30,4 +31,8 @@ public class StatsUI : MonoBehaviour
         Stamina.value = _currStamina / 100.0f;
     }
 
+    public void UpdateEnemyHpUI(float _currEnemyHp)
+    {
+        EnemyHp.value = _currEnemyHp / 100.0f;
+    }
 }
