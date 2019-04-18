@@ -6,6 +6,7 @@ public class PlayerCombat : MonoBehaviour
 {
     // the current action the player is trying to do.
     CombatStates state;
+    CombatStates nextState;
     // The max amount of health the player can have
     float maxHealth;
     // the current health that will be updated continually
@@ -44,6 +45,7 @@ public class PlayerCombat : MonoBehaviour
     void Start()
     {
         state = CombatStates.NONE;
+        nextState = CombatStates.NONE;
         maxHealth = 100.0f;
         currHealth = 100.0f;
         regenAmountHealth = 0.1f;
@@ -79,8 +81,11 @@ public class PlayerCombat : MonoBehaviour
             parryTimer = 0.0f;
         }
 
-        switch(state)
+        switch(GetState())
         {
+            case CombatStates.ATTACK:
+                Attack();
+                break;
             case CombatStates.BLOCK:
                 currStamina -= blockStaminaDecrease;
                 break;
@@ -98,7 +103,7 @@ public class PlayerCombat : MonoBehaviour
 
         stats.UpdateStaminaUI(currStamina);
 
-        if(currStamina < staminaActionMinimal && state != CombatStates.NONE)
+        if(currStamina < staminaActionMinimal && GetState() != CombatStates.NONE)
         {
             SetState(CombatStates.NONE);
         }
@@ -109,36 +114,40 @@ public class PlayerCombat : MonoBehaviour
         return (state);
     }
 
-    public void button_State(string _state)
-    {
-        if(currStamina >= staminaActionMinimal)
-        switch(_state)
-        {
-            case "ATTACK":
-                SetState(CombatStates.ATTACK);
-                return;
-            case "BLOCK":
-                    if (state != CombatStates.BLOCK)
-                        SetState(CombatStates.BLOCK);
-                    else
-                        state = CombatStates.NONE;
-                return;
-            case "PARRY": // need ot make parry be a timer for so long and then cancels itself
-                    if (state != CombatStates.PARRY)
-                    {
-                        SetState(CombatStates.PARRY);
-                        parryTimer = parryTimerHold;
-                    }
-                    else
-                        state = CombatStates.NONE;
-                    return;
-        }
-    }
 
     void SetState(CombatStates _state)
     {
-        state = _state;
-        DebugMobileManager.Log("Player State is: " + state.ToString());
+        if (currStamina >= staminaActionMinimal)
+        {
+            if (GetState() != CombatStates.PARRY)
+            {
+                parryTimer = parryTimerHold;
+            }
+
+            if (GetState() != _state)
+            {
+                state = _state;
+                nextState = CombatStates.NONE;
+            }
+            else
+            {
+                state = CombatStates.NONE;
+                nextState = CombatStates.NONE;
+            }
+        }
+        else
+        {
+            state = CombatStates.NONE;
+            nextState = CombatStates.NONE;
+        }
+
+        DebugMobileManager.Log("Player State is: " + GetState().ToString());
+    }
+
+    public void SetNextState(CombatStates _state)
+    {
+        nextState = _state;
+        SetState(nextState);
     }
 
     public void Attack()
